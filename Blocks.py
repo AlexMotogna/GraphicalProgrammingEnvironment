@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from PyQt5 import QtWidgets
+from Dialogs import *
 
 
 class Block:
@@ -9,9 +9,14 @@ class Block:
     def execute(self):
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def clickAction(qWidget, item):
+    def getBlockText(cls):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def clickAction(cls, qWidget, item):
         pass
 
 
@@ -24,9 +29,14 @@ class AssignmentBlock(Block):
     def execute(self):
         self.result.setValue(self.operand.getValue())
 
-    @staticmethod
-    def clickAction(qWidget, item):
-        pass
+    @classmethod
+    def getBlockText(cls):
+        return "Assign"
+
+    @classmethod
+    def clickAction(cls, qWidget, item):
+        dialog = TwoInputDialog(qWidget, item, cls.getBlockText())
+        dialog.exec()
 
 
 class TwoOperandBlock(Block):
@@ -40,10 +50,15 @@ class TwoOperandBlock(Block):
     def execute(self):
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def clickAction(qWidget, item):
+    def getBlockText(cls):
         pass
+
+    @classmethod
+    def clickAction(cls, qWidget, item):
+        dialog = ThreeInputDialog(qWidget, item, cls.getBlockText())
+        dialog.exec()
 
 
 class AddBlock(TwoOperandBlock):
@@ -54,11 +69,9 @@ class AddBlock(TwoOperandBlock):
     def execute(self):
         self.result.setValue(self.operand1.getValue() + self.operand2.getValue())
 
-    @staticmethod
-    def clickAction(qWidget, item):
-        text, ok = QtWidgets.QInputDialog.getText(qWidget, 'Input Dialog', 'Enter text:')
-        if ok and text:
-            item.setText("Add " + text)
+    @classmethod
+    def getBlockText(cls):
+        return "Add"
 
 
 class SubtractBlock(TwoOperandBlock):
@@ -69,9 +82,9 @@ class SubtractBlock(TwoOperandBlock):
     def execute(self):
         self.result.setValue(self.operand1.getValue() - self.operand2.getValue())
 
-    @staticmethod
-    def clickAction(qWidget, item):
-        pass
+    @classmethod
+    def getBlockText(cls):
+        return "Subtract"
 
 
 class MultiplyBlock(TwoOperandBlock):
@@ -82,9 +95,9 @@ class MultiplyBlock(TwoOperandBlock):
     def execute(self):
         self.result.setValue(self.operand1.getValue() * self.operand2.getValue())
 
-    @staticmethod
-    def clickAction(qWidget, item):
-        pass
+    @classmethod
+    def getBlockText(cls):
+        return "Multiply"
 
 
 class DivideBlock(TwoOperandBlock):
@@ -95,9 +108,9 @@ class DivideBlock(TwoOperandBlock):
     def execute(self):
         self.result.setValue(self.operand1.getValue() / self.operand2.getValue())
 
-    @staticmethod
-    def clickAction(qWidget, item):
-        pass
+    @classmethod
+    def getBlockText(cls):
+        return "Divide"
 
 
 class ModBlock(TwoOperandBlock):
@@ -108,17 +121,17 @@ class ModBlock(TwoOperandBlock):
     def execute(self):
         self.result.setValue(self.operand1.getValue() % self.operand2.getValue())
 
-    @staticmethod
-    def clickAction(qWidget, item):
-        pass
+    @classmethod
+    def getBlockText(cls):
+        return "Mod"
 
 
 def getClassFromText(text):
     return {
-        "Assign": AssignmentBlock,
-        "Add": AddBlock,
-        "Subtract": SubtractBlock,
-        "Multiply": MultiplyBlock,
-        "Divide": DivideBlock,
-        "Mod": ModBlock
+        AssignmentBlock.getBlockText(): AssignmentBlock,
+        AddBlock.getBlockText(): AddBlock,
+        SubtractBlock.getBlockText(): SubtractBlock,
+        MultiplyBlock.getBlockText(): MultiplyBlock,
+        DivideBlock.getBlockText(): DivideBlock,
+        ModBlock.getBlockText(): ModBlock
     }.get(text.split()[0], Block)
