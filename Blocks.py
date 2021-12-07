@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 from Dialogs import *
+from Variable import Constant
 
 
 class Block:
@@ -18,6 +19,40 @@ class Block:
     @abstractmethod
     def clickAction(cls, qWidget, item):
         pass
+
+    @classmethod
+    @abstractmethod
+    def factoryMethod(cls, codeString, variableList):
+        pass
+
+
+class PrintBlock(Block):
+
+    def __init__(self, variable):
+        self.variable = variable
+
+    def execute(self):
+        print(self.variable.getValue())
+
+    @classmethod
+    def getBlockText(cls):
+        return "Print"
+
+    @classmethod
+    def clickAction(cls, qWidget, item):
+        dialog = PrintInputDialog(qWidget, item)
+        dialog.exec()
+
+    @classmethod
+    @abstractmethod
+    def factoryMethod(cls, codeString, variableList):
+        codeStringSplit = codeString.split()
+
+        variable = next((x for x in variableList if x.getName() == codeStringSplit[1]), None)
+        if variable is None:
+            raise ValueError("Nonexistent Variable")
+
+        return cls(variable)
 
 
 class AssignmentBlock(Block):
@@ -37,6 +72,24 @@ class AssignmentBlock(Block):
     def clickAction(cls, qWidget, item):
         dialog = TwoInputDialog(qWidget, item, cls.getBlockText())
         dialog.exec()
+
+    @classmethod
+    @abstractmethod
+    def factoryMethod(cls, codeString, variableList):
+        codeStringSplit = codeString.split()
+
+        result = next((x for x in variableList if x.getName() == codeStringSplit[1]), None)
+        if result is None:
+            raise ValueError("Nonexistent Variable")
+
+        if codeStringSplit[2].isnumeric():
+            operand = Constant(int(codeStringSplit[2]))
+        else:
+            operand = next((x for x in variableList if x.getName() == codeStringSplit[2]), None)
+            if operand is None:
+                raise ValueError("Nonexistent Variable")
+
+        return cls(result, operand)
 
 
 class TwoOperandBlock(Block):
@@ -59,6 +112,30 @@ class TwoOperandBlock(Block):
     def clickAction(cls, qWidget, item):
         dialog = ThreeInputDialog(qWidget, item, cls.getBlockText())
         dialog.exec()
+
+    @classmethod
+    def factoryMethod(cls, codeString, variableList):
+        codeStringSplit = codeString.split()
+
+        result = next((x for x in variableList if x.getName() == codeStringSplit[1]), None)
+        if result is None:
+            raise ValueError("Nonexistent Variable")
+
+        if codeStringSplit[2].isnumeric():
+            operand1 = Constant(int(codeStringSplit[2]))
+        else:
+            operand1 = next((x for x in variableList if x.getName() == codeStringSplit[2]), None)
+            if operand1 is None:
+                raise ValueError("Nonexistent Variable")
+
+        if codeStringSplit[3].isnumeric():
+            operand2 = Constant(int(codeStringSplit[3]))
+        else:
+            operand2 = next((x for x in variableList if x.getName() == codeStringSplit[3]), None)
+            if operand2 is None:
+                raise ValueError("Nonexistent Variable")
+
+        return cls(result, operand1, operand2)
 
 
 class AddBlock(TwoOperandBlock):
@@ -106,6 +183,8 @@ class DivideBlock(TwoOperandBlock):
         super().__init__(result, operand1, operand2)
 
     def execute(self):
+        if self.operand2.getValue() == 0:
+            raise ValueError("Can't divide by zero")
         self.result.setValue(self.operand1.getValue() / self.operand2.getValue())
 
     @classmethod
@@ -133,5 +212,6 @@ def getClassFromText(text):
         SubtractBlock.getBlockText(): SubtractBlock,
         MultiplyBlock.getBlockText(): MultiplyBlock,
         DivideBlock.getBlockText(): DivideBlock,
-        ModBlock.getBlockText(): ModBlock
+        ModBlock.getBlockText(): ModBlock,
+        PrintBlock.getBlockText(): PrintBlock
     }.get(text.split()[0], Block)
