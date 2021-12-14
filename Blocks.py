@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 from Dialogs import *
-from Variable import Constant
+from Variable import *
 
 
 class Block:
@@ -44,7 +44,6 @@ class PrintBlock(Block):
         dialog.exec()
 
     @classmethod
-    @abstractmethod
     def factoryMethod(cls, codeString, variableList):
         codeStringSplit = codeString.split()
 
@@ -74,7 +73,6 @@ class AssignmentBlock(Block):
         dialog.exec()
 
     @classmethod
-    @abstractmethod
     def factoryMethod(cls, codeString, variableList):
         codeStringSplit = codeString.split()
 
@@ -198,11 +196,96 @@ class ModBlock(TwoOperandBlock):
         super().__init__(result, operand1, operand2)
 
     def execute(self):
+        if self.operand2.getValue() == 0:
+            raise ValueError("Can't mod by zero")
         self.result.setValue(self.operand1.getValue() % self.operand2.getValue())
 
     @classmethod
     def getBlockText(cls):
         return "Mod"
+
+
+class IfBlock(Block):
+
+    def __init__(self, value1, value2, instrIndex, endIndex):
+        self.value1 = value1
+        self.value2 = value2
+        self.instrIndex = instrIndex
+        self.endIndex = endIndex
+
+    def execute(self):
+        pass
+
+    @classmethod
+    def getBlockText(cls):
+        return "If"
+
+    @classmethod
+    def clickAction(cls, qWidget, item):
+        dialog = DecisionBlockDialog(qWidget, item, cls.getBlockText())
+        dialog.exec()
+
+    @classmethod
+    def factoryMethod(cls, codeString, variableList):
+        pass
+
+
+class WhileBlock(Block):
+
+    def __init__(self, value1, value2, instrIndex, endIndex):
+        self.value1 = value1
+        self.value2 = value2
+        self.instrIndex = instrIndex
+        self.endIndex = endIndex
+
+    def execute(self):
+        pass
+
+    @classmethod
+    def getBlockText(cls):
+        return "While"
+
+    @classmethod
+    def clickAction(cls, qWidget, item):
+        dialog = DecisionBlockDialog(qWidget, item, cls.getBlockText())
+        dialog.exec()
+
+    @classmethod
+    def factoryMethod(cls, codeString, variableList):
+        pass
+
+
+class EndingBlock(Block):
+
+    def execute(self):
+        pass
+
+    @classmethod
+    def getBlockText(cls):
+        pass
+
+    @classmethod
+    def clickAction(cls, qWidget, item):
+        dialog = DeleteItemDialog(qWidget, item)
+        dialog.exec()
+
+    @classmethod
+    def factoryMethod(cls, codeString, variableList):
+        return None
+
+
+class EndIfBlock(EndingBlock):
+
+    @classmethod
+    def getBlockText(cls):
+        return "EndIf"
+
+
+class EndWhileBlock(EndingBlock):
+
+    @classmethod
+    def getBlockText(cls):
+        return "EndWhile"
 
 
 def getClassFromText(text):
@@ -213,5 +296,9 @@ def getClassFromText(text):
         MultiplyBlock.getBlockText(): MultiplyBlock,
         DivideBlock.getBlockText(): DivideBlock,
         ModBlock.getBlockText(): ModBlock,
-        PrintBlock.getBlockText(): PrintBlock
+        PrintBlock.getBlockText(): PrintBlock,
+        IfBlock.getBlockText(): IfBlock,
+        EndIfBlock.getBlockText(): EndIfBlock,
+        WhileBlock.getBlockText(): WhileBlock,
+        EndWhileBlock.getBlockText(): EndWhileBlock
     }.get(text.split()[0], Block)
