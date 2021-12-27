@@ -62,7 +62,7 @@ class PrintInputDialog(QDialog):
 
     def onConfirmButtonPressed(self):
         try:
-            verifyResultVariable(self.qWidget, self.textboxVariable.text(), "Invalid variable")
+            verifyOperand(self.qWidget, self.textboxVariable.text(), "Invalid value to print")
 
             self.item.setText("Print " + self.textboxVariable.text())
             self.accept()
@@ -161,7 +161,7 @@ class DecisionBlockDialog(TwoInputDialog):
 
         self.comparisonLabel = QLabel("Comparison Operator")
         self.comparisonBox = QComboBox()
-        self.comparisonBox.addItems(["=", "<", ">", "<=", ">="])
+        self.comparisonBox.addItems(["=", "!=", "<", ">", "<=", ">="])
 
         self.labelResult.setText("First comparison operand")
         self.labelOperand1.setText("Second comparison operand")

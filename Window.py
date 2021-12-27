@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QListWidget, QHBoxLayout, QListWidgetItem
-from Blocks import *
 from CodeRunner import *
 
 
@@ -119,7 +118,8 @@ class Window(QWidget):
     def isVariableNameValid(self, variableName):
         return not(self.variableInList(variableName)
                    or variableName.__contains__("...")
-                   or variableName == "instrIndex")\
+                   or variableName == "instrIndex"
+                   or variableName == "printLog")\
                and variableName[0].isalpha()
 
     def onClickAddVariable(self):

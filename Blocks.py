@@ -28,11 +28,12 @@ class Block:
 
 class PrintBlock(Block):
 
-    def __init__(self, variable):
+    def __init__(self, variable, printLog):
         self.variable = variable
+        self.printLog = printLog
 
     def execute(self):
-        print(self.variable.getValue())
+        self.printLog.append(str(self.variable.getValue()))
 
     @classmethod
     def getBlockText(cls):
@@ -47,11 +48,18 @@ class PrintBlock(Block):
     def factoryMethod(cls, codeString, variableList):
         codeStringSplit = codeString.split()
 
-        variable = next((x for x in variableList if x.getName() == codeStringSplit[1]), None)
-        if variable is None:
-            raise ValueError("Nonexistent Variable")
+        if codeStringSplit[1].isnumeric():
+            variable = Constant(int(codeStringSplit[1]))
+        else:
+            variable = next((x for x in variableList if x.getName() == codeStringSplit[1]), None)
+            if variable is None:
+                raise ValueError("Nonexistent Variable")
 
-        return cls(variable)
+        printLog = next((x for x in variableList if x.getName() == "printLog"), None)
+        if variable is None:
+            raise ValueError("ERROR")
+
+        return cls(variable, printLog)
 
 
 class AssignmentBlock(Block):
@@ -207,14 +215,16 @@ class ModBlock(TwoOperandBlock):
 
 class IfBlock(Block):
 
-    def __init__(self, value1, value2, instrIndex, endIndex):
+    def __init__(self, value1, value2, comparisonOperator, instrIndex, endIndex):
         self.value1 = value1
         self.value2 = value2
+        self.comparisonOperator = comparisonOperator
         self.instrIndex = instrIndex
         self.endIndex = endIndex
 
     def execute(self):
-        pass
+        if not evaluateBooleanExpression(self.value1.getValue(), self.value2.getValue(), self.comparisonOperator):
+            self.instrIndex.setValue(self.endIndex.getValue())
 
     @classmethod
     def getBlockText(cls):
@@ -227,19 +237,72 @@ class IfBlock(Block):
 
     @classmethod
     def factoryMethod(cls, codeString, variableList):
+        codeStringSplit = codeString.split()
+
+        instrIndex = next((x for x in variableList if x.getName() == "instrIndex"), None)
+        if instrIndex is None:
+            raise ValueError("Nonexistent Variable")
+
+        if codeStringSplit[1].isnumeric():
+            operand1 = Constant(int(codeStringSplit[1]))
+        else:
+            operand1 = next((x for x in variableList if x.getName() == codeStringSplit[1]), None)
+            if operand1 is None:
+                raise ValueError("Nonexistent Variable")
+
+        comparisonOperator = codeStringSplit[2]
+        if comparisonOperator not in ["=", "!=", "<", ">", "<=", ">="]:
+            raise ValueError("If Error")
+
+        if codeStringSplit[3].isnumeric():
+            operand2 = Constant(int(codeStringSplit[3]))
+        else:
+            operand2 = next((x for x in variableList if x.getName() == codeStringSplit[3]), None)
+            if operand1 is None:
+                raise ValueError("Nonexistent Variable")
+
+        if codeStringSplit[4].isnumeric():
+            endIndex = Constant(int(codeStringSplit[4]))
+        else:
+            raise ValueError("If Error")
+
+        return cls(operand1, operand2, comparisonOperator, instrIndex, endIndex)
+
+
+class EndIfBlock(Block):
+
+    def __init__(self):
         pass
+
+    def execute(self):
+        pass
+
+    @classmethod
+    def getBlockText(cls):
+        return "EndIf"
+
+    @classmethod
+    def clickAction(cls, qWidget, item):
+        dialog = DeleteItemDialog(qWidget, item)
+        dialog.exec()
+
+    @classmethod
+    def factoryMethod(cls, codeString, variableList):
+        return cls()
 
 
 class WhileBlock(Block):
 
-    def __init__(self, value1, value2, instrIndex, endIndex):
+    def __init__(self, value1, value2, comparisonOperator, instrIndex, endIndex):
         self.value1 = value1
         self.value2 = value2
+        self.comparisonOperator = comparisonOperator
         self.instrIndex = instrIndex
         self.endIndex = endIndex
 
     def execute(self):
-        pass
+        if not evaluateBooleanExpression(self.value1.getValue(), self.value2.getValue(), self.comparisonOperator):
+            self.instrIndex.setValue(self.endIndex.getValue())
 
     @classmethod
     def getBlockText(cls):
@@ -252,17 +315,54 @@ class WhileBlock(Block):
 
     @classmethod
     def factoryMethod(cls, codeString, variableList):
-        pass
+        codeStringSplit = codeString.split()
+
+        instrIndex = next((x for x in variableList if x.getName() == "instrIndex"), None)
+        if instrIndex is None:
+            raise ValueError("Nonexistent Variable")
+
+        if codeStringSplit[1].isnumeric():
+            operand1 = Constant(int(codeStringSplit[1]))
+        else:
+            operand1 = next((x for x in variableList if x.getName() == codeStringSplit[1]), None)
+            if operand1 is None:
+                raise ValueError("Nonexistent Variable")
+
+        comparisonOperator = codeStringSplit[2]
+        if comparisonOperator not in ["=", "!=", "<", ">", "<=", ">="]:
+            raise ValueError("While Error")
+
+        if codeStringSplit[3].isnumeric():
+            operand2 = Constant(int(codeStringSplit[3]))
+        else:
+            operand2 = next((x for x in variableList if x.getName() == codeStringSplit[3]), None)
+            if operand1 is None:
+                raise ValueError("Nonexistent Variable")
+
+        if codeStringSplit[4].isnumeric():
+            endIndex = Constant(int(codeStringSplit[4]))
+        else:
+            raise ValueError("While Error")
+
+        return cls(operand1, operand2, comparisonOperator, instrIndex, endIndex)
 
 
-class EndingBlock(Block):
+class EndWhileBlock(Block):
+
+    def __init__(self, value1, value2, comparisonOperator, instrIndex, startIndex):
+        self.value1 = value1
+        self.value2 = value2
+        self.comparisonOperator = comparisonOperator
+        self.instrIndex = instrIndex
+        self.startIndex = startIndex
 
     def execute(self):
-        pass
+        if evaluateBooleanExpression(self.value1.getValue(), self.value2.getValue(), self.comparisonOperator):
+            self.instrIndex.setValue(self.startIndex.getValue())
 
     @classmethod
     def getBlockText(cls):
-        pass
+        return "EndWhile"
 
     @classmethod
     def clickAction(cls, qWidget, item):
@@ -271,21 +371,36 @@ class EndingBlock(Block):
 
     @classmethod
     def factoryMethod(cls, codeString, variableList):
-        return None
+        codeStringSplit = codeString.split()
 
+        instrIndex = next((x for x in variableList if x.getName() == "instrIndex"), None)
+        if instrIndex is None:
+            raise ValueError("Nonexistent Variable")
 
-class EndIfBlock(EndingBlock):
+        if codeStringSplit[2].isnumeric():
+            operand1 = Constant(int(codeStringSplit[2]))
+        else:
+            operand1 = next((x for x in variableList if x.getName() == codeStringSplit[2]), None)
+            if operand1 is None:
+                raise ValueError("Nonexistent Variable")
 
-    @classmethod
-    def getBlockText(cls):
-        return "EndIf"
+        comparisonOperator = codeStringSplit[3]
+        if comparisonOperator not in ["=", "!=", "<", ">", "<=", ">="]:
+            raise ValueError("While Error")
 
+        if codeStringSplit[4].isnumeric():
+            operand2 = Constant(int(codeStringSplit[4]))
+        else:
+            operand2 = next((x for x in variableList if x.getName() == codeStringSplit[4]), None)
+            if operand1 is None:
+                raise ValueError("Nonexistent Variable")
 
-class EndWhileBlock(EndingBlock):
+        if codeStringSplit[5].isnumeric():
+            startIndex = Constant(int(codeStringSplit[5]))
+        else:
+            raise ValueError("While Error")
 
-    @classmethod
-    def getBlockText(cls):
-        return "EndWhile"
+        return cls(operand1, operand2, comparisonOperator, instrIndex, startIndex)
 
 
 def getClassFromText(text):
@@ -302,3 +417,23 @@ def getClassFromText(text):
         WhileBlock.getBlockText(): WhileBlock,
         EndWhileBlock.getBlockText(): EndWhileBlock
     }.get(text.split()[0], Block)
+
+
+def evaluateBooleanExpression(value1, value2, comparisonOperator):
+    if comparisonOperator == "=":
+        return value1 == value2
+
+    if comparisonOperator == "!=":
+        return value1 != value2
+
+    if comparisonOperator == "<=":
+        return value1 <= value2
+
+    if comparisonOperator == ">=":
+        return value1 >= value2
+
+    if comparisonOperator == "<":
+        return value1 < value2
+
+    if comparisonOperator == ">":
+        return value1 > value2

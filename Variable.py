@@ -18,3 +18,13 @@ class Variable(Constant):
 
     def setValue(self, newValue):
         self.value = newValue
+
+
+class PrintLog(Variable):
+
+    def __init__(self, name):
+        super().__init__("", name)
+
+    def append(self, string):
+        self.value += string
+        self.value += "\n"
